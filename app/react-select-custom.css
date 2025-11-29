@@ -1,0 +1,91 @@
+/* React Select Custom Styles - Override Emotion CSS */
+
+/* Menu container */
+.react-select__menu,
+div[class*="react-select__menu"],
+[id*="react-select"][id*="listbox"] {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Menu list - force solid background */
+.react-select__menu-list,
+div[class*="react-select__menu-list"],
+div[class*="css-"][class*="MenuList"] {
+  background-color: hsl(var(--card)) !important;
+  padding: 0.25rem !important;
+}
+
+/* Options */
+.react-select__option,
+div[class*="react-select__option"],
+div[class*="css-"][class*="option"] {
+  cursor: pointer !important;
+  border-radius: 0.375rem !important;
+  background-color: transparent !important;
+}
+
+.react-select__option--is-focused,
+div[class*="react-select__option--is-focused"],
+div[class*="css-"][class*="option"][class*="focused"] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.react-select__option--is-selected,
+div[class*="react-select__option--is-selected"],
+div[class*="css-"][class*="option"][class*="selected"] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* Control */
+.react-select__control,
+div[class*="react-select__control"] {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.react-select__control--is-focused,
+div[class*="react-select__control--is-focused"] {
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 1px hsl(var(--ring)) !important;
+}
+
+/* Text elements */
+.react-select__single-value,
+div[class*="react-select__single-value"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.react-select__input-container,
+div[class*="react-select__input-container"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.react-select__placeholder,
+div[class*="react-select__placeholder"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Indicators */
+.react-select__indicator,
+div[class*="react-select__indicator"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.react-select__indicator:hover,
+div[class*="react-select__indicator"]:hover {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Force background on all Emotion-generated classes */
+[class*="css-"][class*="MenuList"],
+[class*="css-"][class*="menu-list"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+[class*="css-"][class*="Menu"]:not([class*="MenuList"]) {
+  background-color: hsl(var(--card)) !important;
+}
