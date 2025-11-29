@@ -11,7 +11,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#84cc16", // Lime-500
     icons: [
       {
-        src: "/icon",
+        src: "/icon/192",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon/512",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
