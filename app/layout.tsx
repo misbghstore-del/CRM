@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -16,6 +16,16 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "BDM CRM",
   description: "Premium CRM for Business Development Managers",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BDM CRM",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#84cc16",
 };
 
 export default function RootLayout({

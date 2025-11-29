@@ -134,19 +134,31 @@ export default function ManageCustomersDialog({
     setProcessing(false);
   };
 
-  const handleUnassign = async (customerId: string, customerName: string) => {
-    if (!confirm(`Are you sure you want to unassign ${customerName}?`)) {
-      return;
-    }
+  // State for unassign confirmation
+  const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false);
+  const [customerToUnassign, setCustomerToUnassign] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const handleUnassignClick = (customerId: string, customerName: string) => {
+    setCustomerToUnassign({ id: customerId, name: customerName });
+    setUnassignConfirmOpen(true);
+  };
+
+  const confirmUnassign = async () => {
+    if (!customerToUnassign) return;
 
     setProcessing(true);
-    const result = await unassignCustomer(customerId);
+    const result = await unassignCustomer(customerToUnassign.id);
 
     if (result.error) {
       alert(`Error: ${result.error}`);
     } else {
       alert(result.message);
       fetchData();
+      setUnassignConfirmOpen(false);
+      setCustomerToUnassign(null);
     }
     setProcessing(false);
   };
@@ -213,8 +225,6 @@ export default function ManageCustomersDialog({
               Refresh
             </Button>
           </div>
-
-          {/* Customer Table */}
           <div className="flex-1 overflow-auto border rounded-lg">
             <table className="w-full text-left text-sm">
               <thead className="bg-muted text-muted-foreground sticky top-0">
@@ -286,7 +296,7 @@ export default function ManageCustomersDialog({
                               variant="ghost"
                               className="h-8 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() =>
-                                handleUnassign(customer.id, customer.name)
+                                handleUnassignClick(customer.id, customer.name)
                               }
                               disabled={processing}
                             >
@@ -320,6 +330,7 @@ export default function ManageCustomersDialog({
 
       {/* Assignment Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        {/* ... existing assignment dialog content ... */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -373,6 +384,42 @@ export default function ManageCustomersDialog({
                 </>
               ) : (
                 "Assign"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unassign Confirmation Dialog */}
+      <Dialog open={unassignConfirmOpen} onOpenChange={setUnassignConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unassign Customer</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove the assignment for{" "}
+              <strong>{customerToUnassign?.name}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setUnassignConfirmOpen(false)}
+              disabled={processing}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmUnassign}
+              disabled={processing}
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                "Remove Assignment"
               )}
             </Button>
           </div>
