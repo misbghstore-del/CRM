@@ -210,7 +210,49 @@ export async function deleteUser(userId: string) {
   try {
     const supabaseAdmin = getAdminClient();
 
-    // Explicitly delete profile first to avoid FK issues if cascade isn't set
+    // 1. Unassign customers (Set assigned_to = null)
+    const { error: unassignError } = await supabaseAdmin
+      .from("customers")
+      .update({ assigned_to: null })
+      .eq("assigned_to", userId);
+
+    if (unassignError) {
+      console.error(
+        "[deleteUser] Failed to unassign customers:",
+        unassignError
+      );
+      throw new Error("Failed to unassign customers from this user.");
+    }
+
+    // 2. Delete Tasks (Assuming tasks are owned by the user and can be removed)
+    const { error: tasksError } = await supabaseAdmin
+      .from("tasks")
+      .delete()
+      .eq("user_id", userId);
+
+    if (tasksError) {
+      console.warn(
+        "[deleteUser] Failed to delete tasks (continuing...):",
+        tasksError
+      );
+    }
+
+    // 3. Nullify Visits (If possible, to keep history but remove user link)
+    // Note: If user_id is NOT NULL in visits, this might fail, and we might need to delete visits.
+    // For now, we try to nullify.
+    const { error: visitsError } = await supabaseAdmin
+      .from("visits")
+      .update({ user_id: null })
+      .eq("user_id", userId);
+
+    if (visitsError) {
+      console.warn(
+        "[deleteUser] Failed to nullify visits (continuing...):",
+        visitsError
+      );
+    }
+
+    // 4. Explicitly delete profile
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .delete()
@@ -221,10 +263,18 @@ export async function deleteUser(userId: string) {
         "[deleteUser] Profile delete warning (might rely on cascade):",
         profileError
       );
+      // If this fails, it's likely due to remaining FK constraints (e.g. visits if nullify failed)
+      if (visitsError) {
+        throw new Error(
+          "Cannot delete user because they have associated visits that cannot be unlinked."
+        );
+      }
+      throw profileError;
     } else {
       console.log("[deleteUser] Profile deleted (or not found)");
     }
 
+    // 5. Delete auth user
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (error) {
