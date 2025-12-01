@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
+import DateDisplay from "@/components/ui/date-display";
 
 export default function VisitsPage() {
   const [visits, setVisits] = useState<any[]>([]);
@@ -211,7 +212,7 @@ export default function VisitsPage() {
                       filteredVisits.map((visit) => (
                         <tr key={visit.id} className="hover:bg-muted/50">
                           <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                            {new Date(visit.timestamp).toLocaleString()}
+                            <DateDisplay timestamp={visit.timestamp} />
                           </td>
                           <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                             {visit.customers?.name}

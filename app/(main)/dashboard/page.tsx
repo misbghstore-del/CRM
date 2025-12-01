@@ -16,6 +16,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import Link from "next/link";
+import DateDisplay from "@/components/ui/date-display";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -168,13 +169,15 @@ export default async function DashboardPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col items-center justify-center rounded-md bg-muted p-2 h-10 w-10">
-                        <span className="text-xs font-bold">
-                          {new Date(visit.timestamp).toLocaleTimeString([], {
+                        <DateDisplay
+                          timestamp={visit.timestamp}
+                          className="text-xs font-bold"
+                          options={{
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: false,
-                          })}
-                        </span>
+                          }}
+                        />
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium leading-none group-hover:text-primary transition-colors">
