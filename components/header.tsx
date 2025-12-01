@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/logo";
 
 export function Header() {
   const pathname = usePathname();
@@ -216,6 +217,7 @@ export function Header() {
           )}
 
           <div className="flex items-center gap-2 md:hidden">
+            <Logo size={32} />
             <span className="text-xl font-heading font-bold text-primary">
               BDM CRM
             </span>
