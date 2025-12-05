@@ -16,8 +16,17 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Pencil } from "lucide-react";
 import { updateCustomer } from "@/app/actions/customers";
 
+interface Customer {
+  id: string;
+  name: string;
+  contact_person?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+}
+
 interface EditCustomerDialogProps {
-  customer: any;
+  customer: Customer;
   trigger?: React.ReactNode;
   onSuccess?: () => void;
 }
@@ -32,6 +41,7 @@ export default function EditCustomerDialog({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent parent form submission
     setLoading(true);
     const formData = new FormData(e.currentTarget);
 
@@ -82,7 +92,7 @@ export default function EditCustomerDialog({
             <Input
               id="contact_person"
               name="contact_person"
-              defaultValue={customer.contact_person}
+              defaultValue={customer.contact_person || ""}
               className="col-span-3"
             />
           </div>
@@ -93,7 +103,7 @@ export default function EditCustomerDialog({
             <Input
               id="phone"
               name="phone"
-              defaultValue={customer.phone}
+              defaultValue={customer.phone || ""}
               className="col-span-3"
             />
           </div>
@@ -104,7 +114,7 @@ export default function EditCustomerDialog({
             <Input
               id="address"
               name="address"
-              defaultValue={customer.address}
+              defaultValue={customer.address || ""}
               className="col-span-3"
             />
           </div>
@@ -115,7 +125,7 @@ export default function EditCustomerDialog({
             <Input
               id="city"
               name="city"
-              defaultValue={customer.city}
+              defaultValue={customer.city || ""}
               placeholder="Enter city"
               className="col-span-3"
             />

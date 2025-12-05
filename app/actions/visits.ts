@@ -4,7 +4,16 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { updateCustomerStage } from "./customers";
 
-export async function createVisit(prevState: any, formData: FormData) {
+export type ActionState = {
+  error?: string;
+  message?: string;
+  success?: boolean;
+};
+
+export async function createVisit(
+  prevState: ActionState | null,
+  formData: FormData
+) {
   const supabase = await createClient();
   const {
     data: { user },

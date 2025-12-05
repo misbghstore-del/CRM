@@ -15,26 +15,53 @@ import {
 import { Calendar } from "lucide-react";
 import DateDisplay from "@/components/ui/date-display";
 
+interface Visit {
+  id: string;
+  timestamp: string;
+  user_id: string;
+  customer_id: string;
+  purpose: string;
+  outcome: string;
+  notes: string;
+  photo_url?: string;
+  customers?: { name: string };
+  profiles?: { full_name: string };
+}
+
 export default function VisitsPage() {
-  const [visits, setVisits] = useState<any[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBDM, setSelectedBDM] = useState<string>("all");
   const [selectedCustomer, setSelectedCustomer] = useState<string>("all");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchVisits = async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
+      // Get user profile to check role
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      let query = supabase
         .from("visits")
         .select("*, customers(name), profiles(full_name)")
         .order("timestamp", { ascending: false });
+
+      // If not admin, only show own visits
+      if (profile?.role !== "admin") {
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data } = await query;
 
       if (data) setVisits(data);
       setLoading(false);
@@ -45,7 +72,7 @@ export default function VisitsPage() {
   // Get unique BDMs and Customers for filter dropdowns
   const uniqueBDMs = useMemo(() => {
     const bdms = visits
-      .map((v) => ({ id: v.bdm_id, name: v.profiles?.full_name }))
+      .map((v) => ({ id: v.user_id, name: v.profiles?.full_name }))
       .filter(
         (v, i, arr) => v.name && arr.findIndex((t) => t.id === v.id) === i
       );
@@ -65,7 +92,7 @@ export default function VisitsPage() {
   const filteredVisits = useMemo(() => {
     return visits.filter((visit) => {
       // BDM filter
-      if (selectedBDM !== "all" && visit.bdm_id !== selectedBDM) {
+      if (selectedBDM !== "all" && visit.user_id !== selectedBDM) {
         return false;
       }
 
@@ -108,7 +135,7 @@ export default function VisitsPage() {
             <div className="space-y-2">
               <Label className="text-muted-foreground">Filter by BDM</Label>
               <Select value={selectedBDM} onValueChange={setSelectedBDM}>
-                <SelectTrigger className="bg-background">
+                <SelectTrigger className="bg-background !h-12 rounded-xl border-border/50 shadow-sm w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,7 +156,7 @@ export default function VisitsPage() {
                 value={selectedCustomer}
                 onValueChange={setSelectedCustomer}
               >
-                <SelectTrigger className="bg-background">
+                <SelectTrigger className="bg-background !h-12 rounded-xl border-border/50 shadow-sm w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,11 +177,11 @@ export default function VisitsPage() {
               <div className="relative">
                 <Input
                   type="date"
-                  className="bg-background pl-10"
+                  className="bg-background pl-10 !h-12 rounded-xl border-border/50 shadow-sm w-full"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
-                <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Calendar className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
               </div>
             </div>
             <div className="space-y-2">
@@ -162,11 +189,11 @@ export default function VisitsPage() {
               <div className="relative">
                 <Input
                   type="date"
-                  className="bg-background pl-10"
+                  className="bg-background pl-10 !h-12 rounded-xl border-border/50 shadow-sm w-full"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
-                <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Calendar className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           </div>

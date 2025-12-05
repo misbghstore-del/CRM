@@ -22,7 +22,6 @@ export function generateImageMetadata() {
 // Image generation
 export default function Icon({ id }: { id: string }) {
   const size = id === "192" ? 192 : 512;
-  const scale = size / 32; // Base size is 32x32
 
   return new ImageResponse(
     (

@@ -3,7 +3,16 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function createCustomer(prevState: any, formData: FormData) {
+export type ActionState = {
+  error?: string;
+  message?: string;
+  success?: boolean;
+};
+
+export async function createCustomer(
+  prevState: ActionState | null,
+  formData: FormData
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -60,6 +69,7 @@ export async function createCustomer(prevState: any, formData: FormData) {
     city,
     stage,
     assigned_to: user.id,
+    created_by: user.id,
     meeting_count: 0,
     site_description: site_description || null,
     architect_id: architect_id || null,
@@ -87,7 +97,7 @@ export async function updateCustomerStage(
 ) {
   const supabase = await createClient();
 
-  const updateData: any = { stage };
+  const updateData: { stage: string; meeting_count?: number } = { stage };
 
   if (meetingCount !== undefined) {
     updateData.meeting_count = meetingCount;
@@ -139,6 +149,8 @@ export async function updateCustomer(customerId: string, formData: FormData) {
       phone,
       address,
       city,
+      last_edited_by: user.id,
+      last_edited_at: new Date().toISOString(),
     })
     .eq("id", customerId);
 

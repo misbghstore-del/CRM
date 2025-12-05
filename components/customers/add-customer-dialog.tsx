@@ -23,9 +23,16 @@ import {
 import { Plus, Loader2 } from "lucide-react";
 import { createCustomer } from "@/app/actions/customers";
 
+interface Customer {
+  id: string;
+  name: string;
+  type: string;
+  profession?: string;
+}
+
 interface AddCustomerDialogProps {
   trigger?: React.ReactNode;
-  onSuccess?: (newCustomer: any) => void;
+  onSuccess?: (newCustomer: Customer | null) => void;
 }
 
 export default function AddCustomerDialog({
@@ -35,7 +42,7 @@ export default function AddCustomerDialog({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [customerType, setCustomerType] = useState("New Lead");
-  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [professionals, setProfessionals] = useState<Customer[]>([]);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -69,6 +76,7 @@ export default function AddCustomerDialog({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent parent form submission
     setLoading(true);
     const formData = new FormData(e.currentTarget);
 

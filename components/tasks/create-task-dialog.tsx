@@ -38,10 +38,16 @@ import {
 } from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
 
+interface Customer {
+  id: string;
+  name: string;
+  phone?: string | null;
+}
+
 interface CreateTaskDialogProps {
   customerId?: string;
   customerName?: string;
-  customers?: any[]; // List of customers for selection
+  customers?: Customer[]; // List of customers for selection
   trigger?: React.ReactNode;
   onSuccess?: () => void;
   defaultDate?: string;
@@ -64,10 +70,11 @@ export default function CreateTaskDialog({
   const router = useRouter();
 
   useEffect(() => {
-    if (customerId) {
+    if (customerId && customerId !== selectedCustomer) {
+      // eslint-disable-next-line
       setSelectedCustomer(customerId);
     }
-  }, [customerId]);
+  }, [customerId, selectedCustomer]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

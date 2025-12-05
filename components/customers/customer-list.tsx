@@ -24,8 +24,19 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+interface Customer {
+  id: string;
+  name: string;
+  type: string;
+  stage: string;
+  city?: string | null;
+  contact_person?: string | null;
+  phone?: string | null;
+  address?: string | null;
+}
+
 interface CustomerListProps {
-  initialCustomers: any[];
+  initialCustomers: Customer[];
 }
 
 export default function CustomerList({ initialCustomers }: CustomerListProps) {
@@ -36,7 +47,7 @@ export default function CustomerList({ initialCustomers }: CustomerListProps) {
 
   // Get unique cities for filter
   const uniqueCities = Array.from(
-    new Set(initialCustomers.map((c) => c.city).filter(Boolean))
+    new Set(initialCustomers.map((c) => c.city).filter((c): c is string => !!c))
   ).sort();
 
   const filteredCustomers = initialCustomers.filter((customer) => {

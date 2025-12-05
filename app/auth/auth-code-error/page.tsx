@@ -23,7 +23,7 @@ export default function AuthCodeError() {
             Authentication Error
           </CardTitle>
           <CardDescription className="text-lg mt-2">
-            We couldn't verify your email address.
+            We couldn&apos;t verify your email address.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

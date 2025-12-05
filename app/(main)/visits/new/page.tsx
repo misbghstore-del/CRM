@@ -24,9 +24,8 @@ import {
   Loader2,
   Plus,
   Check,
-  ChevronsUpDown,
   MapPin,
-  User,
+  User as UserIcon,
   Phone,
   Calendar,
   ArrowRight,
@@ -36,20 +35,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createVisit } from "@/app/actions/visits";
 import AddCustomerDialog from "@/components/customers/add-customer-dialog";
 import EditCustomerDialog from "@/components/customers/edit-customer-dialog";
-import { cn } from "@/utils/cn";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+
 import ReactSelect from "react-select";
 import { Badge } from "@/components/ui/badge";
 
@@ -63,30 +49,42 @@ const PIPELINE_STAGES = [
   "Closed",
 ];
 
+import { User } from "@supabase/supabase-js";
+
+interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  stage: string;
+  type: string;
+  contact_person?: string;
+  address?: string;
+  assigned_to?: string;
+}
+
 function NewVisitForm() {
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
   const [locationName, setLocationName] = useState<string>("");
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<string>("");
   const [currentStage, setCurrentStage] = useState<string>("");
   const [customerType, setCustomerType] = useState<string>("");
-  const [customerDetails, setCustomerDetails] = useState<any>(null);
+  const [customerDetails, setCustomerDetails] = useState<Customer | null>(null);
 
   const [taskId, setTaskId] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
   useEffect(() => {
     const init = async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -165,7 +163,7 @@ function NewVisitForm() {
               setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
             }
           },
-          (error) => {
+          () => {
             setLocationError("Could not get location. Ensure GPS is enabled.");
             // Location error is displayed in the UI
           }
@@ -179,6 +177,7 @@ function NewVisitForm() {
 
   const refreshCustomers = async () => {
     if (!user) return;
+    const supabase = createClient();
     const { data: customers } = await supabase
       .from("customers")
       .select("*")
@@ -398,7 +397,13 @@ function NewVisitForm() {
 
                     <div className="space-y-3 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <User className="h-3.5 w-3.5 text-primary/70" />
+                        <UserIcon className="h-3.5 w-3.5 text-primary/70" />
+                        <span className="truncate">
+                          {customerDetails.contact_person || "N/A"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="h-3.5 w-3.5 text-primary/70" />
                         <span className="truncate">
                           {customerDetails.contact_person || "N/A"}
                         </span>

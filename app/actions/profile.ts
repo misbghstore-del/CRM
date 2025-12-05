@@ -1,47 +1,59 @@
-'use server'
+"use server";
 
-import { createClient } from '@/utils/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 
-export async function updateProfile(prevState: any, formData: FormData) {
-    const supabase = await createClient()
+export type ActionState = {
+  error?: string;
+  message?: string;
+  success?: boolean;
+};
 
-    const fullName = formData.get('fullName') as string
-    const phone = formData.get('phone') as string
+export async function updateProfile(
+  prevState: ActionState | null,
+  formData: FormData
+) {
+  const supabase = await createClient();
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+  const fullName = formData.get("fullName") as string;
+  const phone = formData.get("phone") as string;
 
-    if (userError || !user) {
-        return { error: 'Not authenticated' }
-    }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    // Update public.profiles
-    const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-            full_name: fullName,
-            phone: phone,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
+  if (userError || !user) {
+    return { error: "Not authenticated" };
+  }
 
-    if (updateError) {
-        console.error('Profile update error:', updateError)
-        return { error: 'Failed to update profile' }
-    }
-
-    // Update Auth User Metadata (optional, but good for consistency)
-    const { error: metadataError } = await supabase.auth.updateUser({
-        data: { full_name: fullName }
+  // Update public.profiles
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({
+      full_name: fullName,
+      phone: phone,
+      updated_at: new Date().toISOString(),
     })
+    .eq("id", user.id);
 
-    if (metadataError) {
-        console.error('Metadata update error:', metadataError)
-        // We don't fail the whole request if this fails, as the DB update is more important for the app
-    }
+  if (updateError) {
+    console.error("Profile update error:", updateError);
+    return { error: "Failed to update profile" };
+  }
 
-    revalidatePath('/profile')
-    revalidatePath('/(main)', 'layout') // Revalidate layout to update header name if needed
+  // Update Auth User Metadata (optional, but good for consistency)
+  const { error: metadataError } = await supabase.auth.updateUser({
+    data: { full_name: fullName },
+  });
 
-    return { success: true, message: 'Profile updated successfully' }
+  if (metadataError) {
+    console.error("Metadata update error:", metadataError);
+    // We don't fail the whole request if this fails, as the DB update is more important for the app
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/(main)", "layout"); // Revalidate layout to update header name if needed
+
+  return { success: true, message: "Profile updated successfully" };
 }

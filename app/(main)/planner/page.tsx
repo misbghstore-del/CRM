@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   Card,
@@ -11,38 +11,47 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Plus,
-  Calendar as CalendarIcon,
-  Search,
-  MapPin,
-  Clock,
-} from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Plus, Calendar as CalendarIcon, Search, Clock } from "lucide-react";
 import CreateTaskDialog from "@/components/tasks/create-task-dialog";
 import CustomerHistoryDialog from "@/components/customers/customer-history-dialog";
 import { getTasks } from "@/app/actions/tasks";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+interface Customer {
+  id: string;
+  name: string;
+  address: string | null;
+}
+
+interface PlannedVisit {
+  id: string;
+  customer_id: string | null;
+  customers: {
+    name: string;
+  } | null;
+  priority: string;
+  description: string;
+}
+
 export default function PlannerPage() {
   const [date, setDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [plannedVisits, setPlannedVisits] = useState<any[]>([]);
-  const supabase = createClient();
+  const [plannedVisits, setPlannedVisits] = useState<PlannedVisit[]>([]);
   const router = useRouter();
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     const tasks = await getTasks(date);
     setPlannedVisits(tasks);
     router.refresh();
-  };
+  }, [date, router]);
 
   useEffect(() => {
     const fetchData = async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -61,7 +70,7 @@ export default function PlannerPage() {
       await fetchTasks();
     };
     fetchData();
-  }, [date]);
+  }, [date, fetchTasks]);
 
   const filteredCustomers = customers.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,12 +92,12 @@ export default function PlannerPage() {
         {/* Left Column: Date & Customers */}
         <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-4 md:gap-6">
           <Card className="flex-shrink-0">
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base md:text-lg">
                 Select Date
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
               <div className="relative">
                 <Input
                   type="date"
@@ -102,7 +111,7 @@ export default function PlannerPage() {
           </Card>
 
           <Card className="flex flex-col max-h-[400px] md:max-h-[calc(100vh-20rem)]">
-            <CardHeader className="pb-4">
+            <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
               <CardTitle className="text-base md:text-lg flex items-center justify-between">
                 <span>Customers</span>
                 <span className="text-xs md:text-sm font-normal text-muted-foreground bg-secondary px-2 py-1 rounded-full">
@@ -119,29 +128,28 @@ export default function PlannerPage() {
                 />
               </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <CardContent className="flex-1 overflow-y-auto px-3 md:px-6 pr-1 md:pr-2 custom-scrollbar pb-4 md:pb-6">
               <div className="space-y-2 md:space-y-3">
                 {filteredCustomers.map((customer) => (
                   <div
                     key={customer.id}
-                    className="group flex items-center justify-between rounded-xl border border-border/50 bg-card/50 p-2.5 md:p-3 shadow-sm transition-all hover:bg-accent hover:border-primary/20"
+                    className="group flex items-center justify-between rounded-md border border-input bg-background px-3 h-9 md:h-10 shadow-sm transition-all hover:bg-accent hover:text-accent-foreground w-[90%] mx-auto"
                   >
-                    <div className="flex flex-col gap-1 min-w-0 flex-1 pr-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
                       <span
-                        className="font-medium text-sm md:text-base text-foreground group-hover:text-primary transition-colors truncate"
+                        className="font-medium text-sm md:text-base truncate"
                         title={customer.name}
                       >
                         {customer.name}
                       </span>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                      {customer.address && (
                         <span
-                          className="truncate"
-                          title={customer.address || "No address"}
+                          className="hidden sm:inline text-xs text-muted-foreground truncate max-w-[150px]"
+                          title={customer.address}
                         >
-                          {customer.address || "No address"}
+                          {customer.address}
                         </span>
-                      </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                       <CustomerHistoryDialog
@@ -151,7 +159,7 @@ export default function PlannerPage() {
                           <Button
                             size="icon-sm"
                             variant="ghost"
-                            className="h-7 w-7 md:h-8 md:w-8 rounded-full"
+                            className="h-6 w-6 md:h-7 md:w-7 rounded-full"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -163,7 +171,7 @@ export default function PlannerPage() {
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="h-3.5 w-3.5 md:h-4 md:w-4"
+                              className="h-3 w-3 md:h-3.5 md:w-3.5"
                             >
                               <circle cx="12" cy="12" r="10" />
                               <polyline points="12 6 12 12 16 14" />
@@ -180,9 +188,9 @@ export default function PlannerPage() {
                           <Button
                             size="icon-sm"
                             variant="default"
-                            className="h-7 w-7 md:h-8 md:w-8 rounded-full shadow-none"
+                            className="h-6 w-6 md:h-7 md:w-7 rounded-full shadow-none"
                           >
-                            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            <Plus className="h-3 w-3 md:h-3.5 md:w-3.5" />
                           </Button>
                         }
                       />
@@ -202,7 +210,7 @@ export default function PlannerPage() {
         {/* Right Column: Planned Visits */}
         <div className="md:col-span-7 lg:col-span-8">
           <Card className="bg-muted/30 border-dashed max-h-[500px] md:max-h-[calc(100vh-12rem)] flex flex-col">
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl text-primary flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-4 md:h-5 w-4 md:w-5" />
@@ -244,7 +252,7 @@ export default function PlannerPage() {
                 {plannedVisits.length} visits scheduled
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+            <CardContent className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-4 md:px-6 pb-4 md:pb-6">
               <div className="space-y-3 md:space-y-4">
                 {plannedVisits.length > 0 ? (
                   plannedVisits.map((visit, index) => (

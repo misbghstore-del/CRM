@@ -40,8 +40,6 @@ import {
   Trash2,
   Shield,
   ShieldAlert,
-  CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import {
   createUser,
@@ -52,8 +50,19 @@ import {
   getUsersList,
 } from "@/app/actions/admin";
 
+interface User {
+  id: string;
+  email: string;
+  phone: string;
+  full_name: string;
+  role: string;
+  banned_until?: string | null;
+  created_at: string;
+  last_sign_in_at?: string | null;
+}
+
 export default function AdminPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -62,7 +71,7 @@ export default function AdminPage() {
 
   // Reset Password State
   const [isResetOpen, setIsResetOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
 
   // Confirmation Dialog State
@@ -76,33 +85,6 @@ export default function AdminPage() {
   // Manage Customers Dialog State
   const [isManageCustomersOpen, setIsManageCustomersOpen] = useState(false);
 
-  const supabase = createClient();
-
-  const checkAdminAccess = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-    setCurrentUserEmail(user.email || "");
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profile && profile.role === "admin") {
-      setIsAdmin(true);
-      fetchUsers();
-    } else {
-      setIsAdmin(false);
-      setLoading(false);
-    }
-  };
-
   const fetchUsers = async () => {
     setLoading(true);
     const result = await getUsersList();
@@ -115,6 +97,31 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    const checkAdminAccess = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+      setCurrentUserEmail(user.email || "");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && profile.role === "admin") {
+        setIsAdmin(true);
+        fetchUsers();
+      } else {
+        setIsAdmin(false);
+        setLoading(false);
+      }
+    };
     checkAdminAccess();
   }, []);
 
@@ -214,7 +221,7 @@ export default function AdminPage() {
     );
   };
 
-  const openResetDialog = (user: any) => {
+  const openResetDialog = (user: User) => {
     setSelectedUser(user);
     setNewPassword("");
     setIsResetOpen(true);
@@ -225,6 +232,8 @@ export default function AdminPage() {
       alert("Password must be at least 6 characters");
       return;
     }
+
+    if (!selectedUser) return;
 
     setSyncing(true);
     const result = await resetUserPassword(selectedUser.id, newPassword);
@@ -424,9 +433,10 @@ export default function AdminPage() {
                       </tr>
                     ) : users.length > 0 ? (
                       users.map((user) => {
-                        const isBanned =
+                        const isBanned = !!(
                           user.banned_until &&
-                          new Date(user.banned_until) > new Date();
+                          new Date(user.banned_until) > new Date()
+                        );
                         return (
                           <tr key={user.id} className="hover:bg-muted/50">
                             <td className="px-4 py-3">

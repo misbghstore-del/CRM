@@ -50,32 +50,51 @@ export async function getUsersList() {
     );
 
     // Merge data
-    const mergedUsers = authUsers.map((u: any) => {
-      const profile = profileMap.get(u.id);
-      return {
-        id: u.id,
-        email: u.email,
-        // Prioritize profile data, fallback to metadata, then defaults
-        phone: profile?.phone || u.phone || "",
-        full_name: profile?.full_name || u.user_metadata?.full_name || "",
-        role: profile?.role || u.user_metadata?.role || "user",
-        banned_until: u.banned_until,
-        created_at: u.created_at,
-        last_sign_in_at: u.last_sign_in_at,
-      };
-    });
+    const mergedUsers = authUsers.map(
+      (u: {
+        id: string;
+        email?: string;
+        phone?: string;
+        user_metadata?: { full_name?: string; role?: string };
+        banned_until?: string;
+        created_at: string;
+        last_sign_in_at?: string;
+      }) => {
+        const profile = profileMap.get(u.id);
+        return {
+          id: u.id,
+          email: u.email || "",
+          // Prioritize profile data, fallback to metadata, then defaults
+          phone: profile?.phone || u.phone || "",
+          full_name: profile?.full_name || u.user_metadata?.full_name || "",
+          role: profile?.role || u.user_metadata?.role || "user",
+          banned_until: u.banned_until,
+          created_at: u.created_at,
+          last_sign_in_at: u.last_sign_in_at,
+        };
+      }
+    );
 
     return {
       success: true,
       users: mergedUsers,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching users:", error);
-    return { error: error.message, users: [] };
+    return { error: (error as Error).message, users: [] };
   }
 }
 
-export async function createUser(prevState: any, formData: FormData) {
+export type ActionState = {
+  error?: string;
+  message?: string;
+  success?: boolean;
+};
+
+export async function createUser(
+  prevState: ActionState | null,
+  formData: FormData
+) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("fullName") as string;
@@ -136,9 +155,9 @@ export async function createUser(prevState: any, formData: FormData) {
 
     revalidatePath("/admin");
     return { success: true, message: `User ${email} created successfully!` };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[createUser] Unexpected error:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -163,9 +182,9 @@ export async function toggleUserStatus(userId: string, shouldBan: boolean) {
       success: true,
       message: shouldBan ? "User banned" : "User unbanned",
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[toggleUserStatus] Error:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -199,9 +218,9 @@ export async function updateUserRole(userId: string, newRole: "admin" | "bdm") {
     console.log("[updateUserRole] Success");
     revalidatePath("/admin");
     return { success: true, message: `Role updated to ${newRole}` };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[updateUserRole] Error:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -285,9 +304,9 @@ export async function deleteUser(userId: string) {
     console.log("[deleteUser] Success");
     revalidatePath("/admin");
     return { success: true, message: "User deleted successfully" };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[deleteUser] Error:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -302,9 +321,9 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     if (error) throw error;
 
     return { success: true, message: "Password reset successfully" };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error resetting password:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -392,9 +411,9 @@ export async function getDashboardStats() {
         agents: agentStats,
       },
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching dashboard stats:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -437,9 +456,9 @@ export async function getAllCustomersWithAssignments() {
       success: true,
       customers: customers || [],
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching customers with assignments:", error);
-    return { error: error.message, customers: [] };
+    return { error: (error as Error).message, customers: [] };
   }
 }
 
@@ -481,9 +500,9 @@ export async function assignCustomerToBDM(customerId: string, bdmId: string) {
       success: true,
       message: `Customer assigned to ${bdm.full_name}`,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[assignCustomerToBDM] Error:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }
 
@@ -510,8 +529,8 @@ export async function unassignCustomer(customerId: string) {
       success: true,
       message: "Customer unassigned successfully",
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("[unassignCustomer] Error:", error);
-    return { error: error.message };
+    return { error: (error as Error).message };
   }
 }

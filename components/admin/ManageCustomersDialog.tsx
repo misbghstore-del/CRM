@@ -26,6 +26,28 @@ import {
 } from "@/app/actions/admin";
 import { Loader2, UserPlus, UserMinus, RefreshCw, Search } from "lucide-react";
 
+interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  phone?: string;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  type: string;
+  phone?: string;
+  stage: string;
+  assigned_to?: string | null;
+  bdm?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
+
 interface ManageCustomersDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,8 +57,8 @@ export default function ManageCustomersDialog({
   open,
   onOpenChange,
 }: ManageCustomersDialogProps) {
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [bdms, setBdms] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [bdms, setBdms] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,11 +66,13 @@ export default function ManageCustomersDialog({
 
   // Assignment dialog state
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [selectedBDMId, setSelectedBDMId] = useState<string>("");
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const [customersResult, usersResult] = await Promise.all([
         getAllCustomersWithAssignments(),
@@ -60,7 +84,9 @@ export default function ManageCustomersDialog({
 
       if (customersResult.success) {
         console.log("Setting customers:", customersResult.customers);
-        setCustomers(customersResult.customers || []);
+        setCustomers(
+          (customersResult.customers as unknown as Customer[]) || []
+        );
       } else {
         console.error("Customer fetch error:", customersResult.error);
       }
@@ -68,7 +94,7 @@ export default function ManageCustomersDialog({
       if (usersResult.success && usersResult.users) {
         // Filter only BDMs and admins
         const bdmUsers = usersResult.users.filter(
-          (u: any) => u.role === "bdm" || u.role === "admin"
+          (u: User) => u.role === "bdm" || u.role === "admin"
         );
         console.log("BDMs:", bdmUsers);
         setBdms(bdmUsers);
@@ -81,9 +107,21 @@ export default function ManageCustomersDialog({
     setLoading(false);
   };
 
+  // Track previous open state to handle reset/loading during render
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  // Check for prop change during render (pattern to avoid useEffect setState warning)
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setLoading(true);
+    }
+  }
+
   useEffect(() => {
     if (open) {
-      fetchData();
+      // eslint-disable-next-line
+      fetchData(false);
     }
   }, [open]);
 
@@ -94,7 +132,7 @@ export default function ManageCustomersDialog({
       const matchesSearch =
         searchQuery === "" ||
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.phone?.includes(searchQuery);
+        (customer.phone && customer.phone.includes(searchQuery));
 
       // BDM filter
       const matchesBDM =
@@ -106,7 +144,7 @@ export default function ManageCustomersDialog({
     });
   }, [customers, searchQuery, filterBDM]);
 
-  const openAssignDialog = (customer: any) => {
+  const openAssignDialog = (customer: Customer) => {
     setSelectedCustomer(customer);
     setSelectedBDMId(customer.assigned_to || "");
     setAssignDialogOpen(true);
@@ -177,7 +215,7 @@ export default function ManageCustomersDialog({
           </DialogHeader>
 
           {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-4 items-end py-4">
+          <div className="flex flex-col md:flex-row gap-4 md:items-end py-4">
             <div className="flex-1 space-y-2">
               <Label className="text-sm text-muted-foreground">Search</Label>
               <div className="relative">
@@ -212,9 +250,9 @@ export default function ManageCustomersDialog({
             </div>
 
             <Button
-              onClick={fetchData}
+              onClick={() => fetchData(true)}
               variant="outline"
-              className="w-auto whitespace-nowrap"
+              className="w-full md:w-auto whitespace-nowrap"
               disabled={loading}
             >
               {loading ? (
@@ -225,9 +263,11 @@ export default function ManageCustomersDialog({
               Refresh
             </Button>
           </div>
-          <div className="flex-1 overflow-auto border rounded-lg">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-muted text-muted-foreground sticky top-0">
+
+          <div className="flex-1 overflow-auto border rounded-lg bg-background">
+            {/* Desktop Table View */}
+            <table className="hidden md:table w-full text-left text-sm">
+              <thead className="bg-muted text-muted-foreground sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 font-medium">Customer</th>
                   <th className="px-4 py-3 font-medium">Contact</th>
@@ -320,6 +360,89 @@ export default function ManageCustomersDialog({
                 )}
               </tbody>
             </table>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4 p-4">
+              {loading ? (
+                <div className="p-8 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                </div>
+              ) : filteredCustomers.length > 0 ? (
+                filteredCustomers.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className="flex flex-col gap-3 p-4 rounded-lg border bg-card shadow-sm"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {customer.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {customer.type}
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                        {customer.stage}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        Contact:{" "}
+                      </span>
+                      {customer.phone || "-"}
+                    </div>
+
+                    <div className="text-sm">
+                      <span className="font-medium text-foreground">
+                        Assigned to:{" "}
+                      </span>
+                      {customer.bdm ? (
+                        <span className="text-foreground">
+                          {customer.bdm.full_name}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground italic">
+                          Unassigned
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t mt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-primary hover:text-primary hover:bg-primary/10 border-primary/20"
+                        onClick={() => openAssignDialog(customer)}
+                        disabled={processing}
+                      >
+                        <UserPlus className="mr-1 h-3 w-3" />
+                        {customer.assigned_to ? "Reassign" : "Assign"}
+                      </Button>
+                      {customer.assigned_to && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                          onClick={() =>
+                            handleUnassignClick(customer.id, customer.name)
+                          }
+                          disabled={processing}
+                        >
+                          <UserMinus className="mr-1 h-3 w-3" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  No customers found matching your filters.
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="text-sm text-muted-foreground pt-2">

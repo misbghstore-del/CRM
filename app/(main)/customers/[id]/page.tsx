@@ -12,11 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronRight,
   CheckCircle2,
-  Circle,
-  Clock,
-  Calendar,
   Phone,
   MapPin,
   User,
@@ -25,6 +21,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
+import EditCustomerDialog from "@/components/customers/edit-customer-dialog";
 import Link from "next/link";
 import { updateCustomerStage } from "@/app/actions/customers";
 import { useRouter } from "next/navigation";
@@ -39,23 +36,44 @@ const PIPELINE_STAGES = [
   "Closed",
 ];
 
+interface Customer {
+  id: string;
+  name: string;
+  type: string;
+  address?: string;
+  stage: string;
+  meeting_count?: number;
+  contact_person?: string;
+  phone?: string;
+  created_at: string;
+  last_edited_at: string;
+  created_by_profile?: { full_name: string };
+  last_edited_by_profile?: { full_name: string };
+}
+
 export default function CustomerDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [customer, setCustomer] = useState<any>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchCustomer = async () => {
-      const { data, error } = await supabase
+      const supabase = createClient();
+      const { data } = await supabase
         .from("customers")
-        .select("*")
+        .select(
+          `
+          *,
+          created_by_profile:profiles!created_by(full_name),
+          last_edited_by_profile:profiles!last_edited_by(full_name)
+        `
+        )
         .eq("id", id)
         .single();
 
@@ -68,6 +86,7 @@ export default function CustomerDetailsPage({
   }, [id]);
 
   const handleStageChange = async (newStage: string) => {
+    if (!customer) return;
     setUpdating(true);
     // Optimistic update
     const oldStage = customer.stage;
@@ -85,6 +104,7 @@ export default function CustomerDetailsPage({
   };
 
   const handleMeetingCountChange = async (increment: boolean) => {
+    if (!customer) return;
     const newCount = Math.max(
       0,
       (customer.meeting_count || 0) + (increment ? 1 : -1)
@@ -105,6 +125,7 @@ export default function CustomerDetailsPage({
   };
 
   const handleClosing = async (status: "Converted" | "Not Converted") => {
+    if (!customer) return;
     setUpdating(true);
     const result = await updateCustomerStage(
       customer.id,
@@ -154,14 +175,39 @@ export default function CustomerDetailsPage({
             <span>•</span>
             <span>{customer.address}</span>
           </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-xs text-muted-foreground text-right">
+              {customer.created_by_profile && (
+                <div>
+                  Created by {customer.created_by_profile.full_name} on{" "}
+                  {new Date(customer.created_at).toLocaleDateString()}
+                </div>
+              )}
+              {customer.last_edited_by_profile && (
+                <div>
+                  Last edited by {customer.last_edited_by_profile.full_name} on{" "}
+                  {new Date(customer.last_edited_at).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Main Info */}
         <Card className="md:col-span-2">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Contact Information</CardTitle>
+            <EditCustomerDialog
+              customer={customer}
+              onSuccess={() => router.refresh()}
+              trigger={
+                <Button variant="default" size="sm">
+                  Edit Details
+                </Button>
+              }
+            />
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">

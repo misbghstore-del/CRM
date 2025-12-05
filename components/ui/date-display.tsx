@@ -18,7 +18,8 @@ export default function DateDisplay({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Avoid hydration mismatch by rendering nothing (or a placeholder) on server

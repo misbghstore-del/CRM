@@ -46,7 +46,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
     const getUser = async () => {
       const supabase = createClient();
       const {
@@ -69,6 +69,7 @@ export function Header() {
       }
     };
     getUser();
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSignOut = async () => {
@@ -273,6 +274,12 @@ export function Header() {
                 <DropdownMenuItem disabled className="text-muted-foreground">
                   {userEmail}
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <Link href="/customers">
+                  <DropdownMenuItem className="cursor-pointer focus:bg-secondary focus:text-secondary-foreground">
+                    Customers
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <Link href="/profile">
                   <DropdownMenuItem className="cursor-pointer focus:bg-secondary focus:text-secondary-foreground">
