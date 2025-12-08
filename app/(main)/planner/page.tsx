@@ -88,9 +88,9 @@ export default function PlannerPage() {
       </div>
 
       {/* Mobile: Stack vertically, Desktop: Side by side */}
-      <div className="flex flex-col md:grid md:gap-6 md:grid-cols-12 gap-4">
+      <div className="flex flex-col md:gap-6 gap-4 md:grid md:grid-cols-12">
         {/* Left Column: Date & Customers */}
-        <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-4 md:gap-6">
+        <div className="md:col-span-4 lg:col-span-4 flex flex-col gap-4">
           <Card className="flex-shrink-0">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base md:text-lg">
@@ -111,29 +111,29 @@ export default function PlannerPage() {
           </Card>
 
           <Card className="flex flex-col max-h-[400px] md:max-h-[calc(100vh-20rem)]">
-            <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
+            <CardHeader className="p-4 pb-3 md:p-6 md:pb-4">
               <CardTitle className="text-base md:text-lg flex items-center justify-between">
                 <span>Customers</span>
-                <span className="text-xs md:text-sm font-normal text-muted-foreground bg-secondary px-2 py-1 rounded-full">
+                <span className="text-xs md:text-sm font-normal text-muted-foreground bg-accent px-2.5 py-1 rounded-full">
                   {filteredCustomers.length}
                 </span>
               </CardTitle>
-              <div className="relative mt-2">
-                <Search className="absolute left-3 top-2.5 md:top-3 h-4 w-4 text-muted-foreground" />
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search customers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 md:h-10 text-sm md:text-base"
+                  className="pl-9 h-10 text-sm md:text-base"
                 />
               </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto px-3 md:px-6 pr-1 md:pr-2 custom-scrollbar pb-4 md:pb-6">
-              <div className="space-y-2 md:space-y-3">
+            <CardContent className="flex-1 overflow-y-auto px-4 md:px-6 pr-2 custom-scrollbar pb-4 md:pb-6">
+              <div className="space-y-2">
                 {filteredCustomers.map((customer) => (
                   <div
                     key={customer.id}
-                    className="group flex items-center justify-between rounded-md border border-input bg-background px-3 h-9 md:h-10 shadow-sm transition-all hover:bg-accent hover:text-accent-foreground w-[90%] mx-auto"
+                    className="group flex items-center justify-between rounded-lg border border-border bg-card/50 px-3.5 py-2.5 shadow-xs transition-all hover:bg-accent/50 hover:border-accent"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
                       <span
@@ -152,33 +152,6 @@ export default function PlannerPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
-                      <CustomerHistoryDialog
-                        customerId={customer.id}
-                        customerName={customer.name}
-                        trigger={
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className="h-6 w-6 md:h-7 md:w-7 rounded-full"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3 w-3 md:h-3.5 md:w-3.5"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                          </Button>
-                        }
-                      />
                       <CreateTaskDialog
                         customerId={customer.id}
                         customerName={customer.name}
@@ -208,7 +181,7 @@ export default function PlannerPage() {
         </div>
 
         {/* Right Column: Planned Visits */}
-        <div className="md:col-span-7 lg:col-span-8">
+        <div className="md:col-span-8 lg:col-span-8">
           <Card className="bg-muted/30 border-dashed max-h-[500px] md:max-h-[calc(100vh-12rem)] flex flex-col">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl text-primary flex flex-col sm:flex-row sm:items-center gap-2">
@@ -242,9 +215,8 @@ export default function PlannerPage() {
                       "November",
                       "December",
                     ];
-                    return `${weekdays[d.getDay()]} ${d.getDate()} ${
-                      months[d.getMonth()]
-                    } ${d.getFullYear()}`;
+                    return `${weekdays[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]
+                      } ${d.getFullYear()}`;
                   })()}
                 </span>
               </CardTitle>
@@ -329,6 +301,6 @@ export default function PlannerPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

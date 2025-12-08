@@ -41,20 +41,21 @@ export default function AddCustomerDialog({
 }: AddCustomerDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [customerType, setCustomerType] = useState("New Lead");
+  const [customerType, setCustomerType] = useState("Prospect Dealer");
   const [professionals, setProfessionals] = useState<Customer[]>([]);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
+  const [phoneError, setPhoneError] = useState<string>("");
 
-  // Fetch professionals when dialog opens
+  // Fetch professionals and dealers when dialog opens
   const fetchProfessionals = async () => {
     const { createClient } = await import("@/utils/supabase/client");
     const supabase = createClient();
     const { data } = await supabase
       .from("customers")
       .select("id, name, type, profession")
-      .eq("type", "Professional");
+      .in("type", ["Professional", "Dealer"]);
 
     if (data) setProfessionals(data);
   };
@@ -64,19 +65,54 @@ export default function AddCustomerDialog({
     if (newOpen) {
       fetchProfessionals();
       if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        });
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            });
+          },
+          undefined,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
       }
+    }
+  };
+
+  const checkPhoneExists = async (phone: string) => {
+    if (!phone || phone.length < 10) {
+      setPhoneError("");
+      return;
+    }
+
+    const { createClient } = await import("@/utils/supabase/client");
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("customers")
+      .select("id, name")
+      .eq("phone", phone)
+      .limit(1);
+
+    if (data && data.length > 0) {
+      setPhoneError(`This number already exists for customer: ${data[0].name}`);
+    } else {
+      setPhoneError("");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation(); // Prevent parent form submission
+
+    // Prevent submission if phone number already exists
+    if (phoneError) {
+      return;
+    }
+
     setLoading(true);
     const formData = new FormData(e.currentTarget);
 
@@ -103,7 +139,7 @@ export default function AddCustomerDialog({
   const builders = professionals.filter(
     (p) => p.profession === "Builder" || p.profession === "Contractor"
   );
-  const dealers = professionals.filter((p) => p.profession === "Dealer");
+  const dealers = professionals.filter((p) => p.type === "Dealer");
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -137,9 +173,7 @@ export default function AddCustomerDialog({
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="New Lead">
-                  New Lead (Prospect Dealer)
-                </SelectItem>
+                <SelectItem value="Prospect Dealer">Prospect Dealer</SelectItem>
                 <SelectItem value="Professional">
                   Professional (Builder/Contractor)
                 </SelectItem>
@@ -205,7 +239,7 @@ export default function AddCustomerDialog({
           {customerType !== "Site" && (
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="contact_person" className="text-right">
-                Contact
+                Contact Person
               </Label>
               <Input
                 id="contact_person"
@@ -219,7 +253,16 @@ export default function AddCustomerDialog({
             <Label htmlFor="phone" className="text-right">
               Contact Phone
             </Label>
-            <Input id="phone" name="phone" className="col-span-3" />
+            <div className="col-span-3">
+              <Input
+                id="phone"
+                name="phone"
+                onChange={(e) => checkPhoneExists(e.target.value)}
+              />
+              {phoneError && (
+                <p className="text-sm text-destructive mt-1">{phoneError}</p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="address" className="text-right">
@@ -238,6 +281,17 @@ export default function AddCustomerDialog({
               className="col-span-3"
             />
           </div>
+
+          {customerType === "Prospect Dealer" && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Location Tag</Label>
+              <div className="col-span-3 p-2 bg-muted rounded-md text-sm">
+                {location
+                  ? `${location.lat}, ${location.lng}`
+                  : "Fetching location..."}
+              </div>
+            </div>
+          )}
 
           {customerType === "Site" && (
             <>

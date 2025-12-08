@@ -92,7 +92,8 @@ export default function CustomerList({ initialCustomers }: CustomerListProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Types</SelectItem>
-                <SelectItem value="New Lead">New Lead</SelectItem>
+                <SelectItem value="Prospect Dealer">Prospect Dealer</SelectItem>
+                <SelectItem value="Dealer">Dealer</SelectItem>
                 <SelectItem value="Professional">Professional</SelectItem>
                 <SelectItem value="Site">Project Site</SelectItem>
               </SelectContent>
@@ -184,14 +185,17 @@ export default function CustomerList({ initialCustomers }: CustomerListProps) {
                       </div>
                     </div>
 
-                    <div className="pt-3 flex items-center justify-between border-t border-border/50 mt-3">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Current Stage
-                      </span>
-                      <Badge variant={getStageBadgeVariant(customer.stage)}>
-                        {customer.stage}
-                      </Badge>
-                    </div>
+                    {(customer.type === "Prospect Dealer" ||
+                      customer.type === "Site") && (
+                      <div className="pt-3 flex items-center justify-between border-t border-border/50 mt-3">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Current Stage
+                        </span>
+                        <Badge variant={getStageBadgeVariant(customer.stage)}>
+                          {customer.stage}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

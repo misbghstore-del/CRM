@@ -72,6 +72,15 @@ export default async function DashboardPage() {
     .order("name")
     .returns<Customer[]>();
 
+  // Get user role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id)
+    .single();
+
+  const isAdmin = profile?.role === "admin";
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
@@ -193,15 +202,17 @@ export default async function DashboardPage() {
               <CalendarCheck className="h-5 w-5 text-blue-500" />
               Visits Today
             </CardTitle>
-            <Link href="/visits">
-              <Button
-                variant="link"
-                size="sm"
-                className="h-8 px-0 text-muted-foreground"
-              >
-                View all
-              </Button>
-            </Link>
+            {isAdmin && (
+              <Link href="/visits">
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-8 px-0 text-muted-foreground"
+                >
+                  View all
+                </Button>
+              </Link>
+            )}
           </CardHeader>
           <CardContent className="flex-1">
             <div className="space-y-4">

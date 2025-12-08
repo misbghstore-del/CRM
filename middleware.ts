@@ -54,9 +54,47 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+
+  try {
+    const { data, error } = await supabase.auth.getUser();
+
+    // Handle auth errors (invalid/expired refresh token)
+    if (error) {
+      console.error("Auth error in middleware:", error.message);
+
+      // Clear all auth-related cookies
+      const cookiesToClear = [
+        "sb-access-token",
+        "sb-refresh-token",
+        process.env.NEXT_PUBLIC_SUPABASE_URL
+          ? `sb-${
+              new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split(
+                "."
+              )[0]
+            }-auth-token`
+          : null,
+      ].filter(Boolean);
+
+      cookiesToClear.forEach((cookieName) => {
+        if (cookieName) {
+          response.cookies.delete(cookieName as string);
+        }
+      });
+
+      // Redirect to login if not already there
+      if (
+        !request.nextUrl.pathname.startsWith("/login") &&
+        !request.nextUrl.pathname.startsWith("/auth")
+      ) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+    } else {
+      user = data.user;
+    }
+  } catch (error) {
+    console.error("Unexpected error in middleware:", error);
+  }
 
   if (
     !user &&

@@ -97,7 +97,9 @@ export async function updateCustomerStage(
 ) {
   const supabase = await createClient();
 
-  const updateData: { stage: string; meeting_count?: number } = { stage };
+  const updateData: { stage: string; meeting_count?: number; type?: string } = {
+    stage,
+  };
 
   if (meetingCount !== undefined) {
     updateData.meeting_count = meetingCount;
@@ -109,6 +111,19 @@ export async function updateCustomerStage(
   // Let's store it in the stage string for simplicity: 'Closed - Converted' or 'Closed - Not Converted'
   if (stage === "Closed" && closingStatus) {
     updateData.stage = `Closed - ${closingStatus}`;
+
+    // Auto-convert Prospect Dealer to Dealer when converted
+    if (closingStatus === "Converted") {
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("type")
+        .eq("id", customerId)
+        .single();
+
+      if (customer?.type === "Prospect Dealer") {
+        updateData.type = "Dealer";
+      }
+    }
   }
 
   const { error } = await supabase

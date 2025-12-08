@@ -508,11 +508,10 @@ export default function AdminPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className={`h-8 w-8 p-0 ${
-                                    isBanned
+                                  className={`h-8 w-8 p-0 ${isBanned
                                       ? "text-red-600"
                                       : "text-muted-foreground"
-                                  } hover:text-orange-600`}
+                                    } hover:text-orange-600`}
                                   title={isBanned ? "Unban User" : "Ban User"}
                                   onClick={() =>
                                     handleToggleBan(user.id, isBanned)

@@ -24,14 +24,6 @@ import { Loader2, Plus, Check, ChevronsUpDown } from "lucide-react";
 import { createTask } from "@/app/actions/tasks";
 import { cn } from "@/utils/cn";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -67,7 +59,12 @@ export default function CreateTaskDialog({
     customerId || ""
   );
   const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+
+  const filteredCustomers = customers.filter((c) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (customerId && customerId !== selectedCustomer) {
@@ -148,42 +145,55 @@ export default function CreateTaskDialog({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
-                    <Command
-                      filter={(value, search) => {
-                        if (value.toLowerCase().includes(search.toLowerCase()))
-                          return 1;
-                        return 0;
-                      }}
-                    >
-                      <CommandInput placeholder="Search customer..." />
-                      <CommandList>
-                        <CommandEmpty>No customer found.</CommandEmpty>
-                        <CommandGroup>
-                          {customers.map((c) => (
-                            <CommandItem
-                              key={c.id}
-                              value={`${c.name} ${c.phone || ""}`}
-                              onSelect={() => {
-                                setSelectedCustomer(c.id);
-                                setComboboxOpen(false);
-                              }}
-                            >
-                              <Check
+                    <div className="bg-popover rounded-md">
+                      <div className="flex items-center border-b px-3">
+                        <Input
+                          placeholder="Search customer..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="h-11 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto">
+                        {filteredCustomers.length === 0 ? (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            No customers found.
+                          </div>
+                        ) : (
+                          <div className="p-1">
+                            {filteredCustomers.map((c) => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCustomer(c.id);
+                                  setComboboxOpen(false);
+                                  setSearchQuery("");
+                                }}
                                 className={cn(
-                                  "mr-2 h-4 w-4",
+                                  "w-full flex items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                                   selectedCustomer === c.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
+                                    ? "bg-accent text-accent-foreground"
+                                    : "hover:bg-accent/50"
                                 )}
-                              />
-                              <div className="flex flex-col">
-                                <span>{c.name}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedCustomer === c.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col text-left">
+                                  <span>{c.name}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </PopoverContent>
                 </Popover>
               </div>

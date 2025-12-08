@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { handleAuthError } from "@/utils/auth-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,13 +29,13 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (authError) {
+      setError(handleAuthError(authError));
       setLoading(false);
     } else {
       router.push("/dashboard");
@@ -45,15 +46,15 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${location.origin}/auth/callback`,
       },
     });
-    if (error) {
-      setError(error.message);
+    if (authError) {
+      setError(handleAuthError(authError));
     } else {
       setError("Check your email for the confirmation link.");
     }

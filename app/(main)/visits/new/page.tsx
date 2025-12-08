@@ -166,6 +166,11 @@ function NewVisitForm() {
           () => {
             setLocationError("Could not get location. Ensure GPS is enabled.");
             // Location error is displayed in the UI
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
           }
         );
       } else {
@@ -276,14 +281,14 @@ function NewVisitForm() {
                       value={
                         selectedCustomer
                           ? {
-                              value: selectedCustomer,
-                              label:
-                                customers.find((c) => c.id === selectedCustomer)
-                                  ?.name || "",
-                              phone:
-                                customers.find((c) => c.id === selectedCustomer)
-                                  ?.phone || "",
-                            }
+                            value: selectedCustomer,
+                            label:
+                              customers.find((c) => c.id === selectedCustomer)
+                                ?.name || "",
+                            phone:
+                              customers.find((c) => c.id === selectedCustomer)
+                                ?.phone || "",
+                          }
                           : null
                       }
                       onChange={(option) => {
@@ -296,6 +301,13 @@ function NewVisitForm() {
                         label: c.name,
                         phone: c.phone || "",
                       }))}
+                      filterOption={(option, inputValue) => {
+                        const searchTerm = inputValue.toLowerCase();
+                        return (
+                          option.label.toLowerCase().includes(searchTerm) ||
+                          option.data.phone.toLowerCase().includes(searchTerm)
+                        );
+                      }}
                       placeholder="Name or Phone"
                       isClearable
                       isSearchable

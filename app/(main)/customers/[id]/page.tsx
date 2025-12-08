@@ -25,6 +25,7 @@ import EditCustomerDialog from "@/components/customers/edit-customer-dialog";
 import Link from "next/link";
 import { updateCustomerStage } from "@/app/actions/customers";
 import { useRouter } from "next/navigation";
+import DateDisplay from "@/components/ui/date-display";
 
 const PIPELINE_STAGES = [
   "New Lead",
@@ -60,6 +61,7 @@ export default function CustomerDetailsPage({
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [visits, setVisits] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -82,7 +84,32 @@ export default function CustomerDetailsPage({
       }
       setLoading(false);
     };
+
+    const fetchVisits = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("visits")
+        .select(
+          `
+          id,
+          timestamp,
+          purpose,
+          outcome,
+          notes,
+          photo_url,
+          profiles!visits_user_id_fkey(full_name)
+        `
+        )
+        .eq("customer_id", id)
+        .order("timestamp", { ascending: false });
+
+      if (data) {
+        setVisits(data);
+      }
+    };
+
     fetchCustomer();
+    fetchVisits();
   }, [id]);
 
   const handleStageChange = async (newStage: string) => {
@@ -249,7 +276,7 @@ export default function CustomerDetailsPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {customer.type === "New Lead" ? (
+            {customer.type === "Prospect Dealer" ? (
               <div className="space-y-6">
                 <div className="relative border-l-2 border-muted pl-6 space-y-6">
                   {PIPELINE_STAGES.map((stage, index) => {
@@ -396,6 +423,61 @@ export default function CustomerDetailsPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Visit History */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Visit History</CardTitle>
+          <CardDescription>All visits logged for this customer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {visits.length > 0 ? (
+            <div className="space-y-4">
+              {visits.map((visit) => (
+                <div
+                  key={visit.id}
+                  className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-semibold">{visit.purpose}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        By {visit.profiles?.full_name || "Unknown"}
+                      </p>
+                    </div>
+                    <DateDisplay timestamp={visit.timestamp} />
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-sm">
+                      <span className="font-medium">Outcome:</span>{" "}
+                      {visit.outcome}
+                    </p>
+                    {visit.notes && (
+                      <p className="text-sm mt-1">
+                        <span className="font-medium">Notes:</span>{" "}
+                        {visit.notes}
+                      </p>
+                    )}
+                  </div>
+                  {visit.photo_url && (
+                    <div className="mt-2">
+                      <img
+                        src={visit.photo_url}
+                        alt="Visit photo"
+                        className="rounded-md max-h-40 object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No visits logged for this customer yet.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

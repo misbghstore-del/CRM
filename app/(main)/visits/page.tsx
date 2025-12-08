@@ -5,14 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "lucide-react";
+import { Calendar, Search } from "lucide-react";
 import DateDisplay from "@/components/ui/date-display";
 
 interface Visit {
@@ -31,8 +24,8 @@ interface Visit {
 export default function VisitsPage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBDM, setSelectedBDM] = useState<string>("all");
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("all");
+  const [bdmSearch, setBdmSearch] = useState<string>("");
+  const [customerSearch, setCustomerSearch] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
@@ -91,15 +84,22 @@ export default function VisitsPage() {
   // Filter visits based on selected filters
   const filteredVisits = useMemo(() => {
     return visits.filter((visit) => {
-      // BDM filter
-      if (selectedBDM !== "all" && visit.user_id !== selectedBDM) {
+      // BDM filter - search by name
+      if (
+        bdmSearch &&
+        !visit.profiles?.full_name
+          ?.toLowerCase()
+          .includes(bdmSearch.toLowerCase())
+      ) {
         return false;
       }
 
-      // Customer filter
+      // Customer filter - search by name
       if (
-        selectedCustomer !== "all" &&
-        visit.customer_id !== selectedCustomer
+        customerSearch &&
+        !visit.customers?.name
+          ?.toLowerCase()
+          .includes(customerSearch.toLowerCase())
       ) {
         return false;
       }
@@ -119,7 +119,7 @@ export default function VisitsPage() {
 
       return true;
     });
-  }, [visits, selectedBDM, selectedCustomer, startDate, endDate]);
+  }, [visits, bdmSearch, customerSearch, startDate, endDate]);
 
   return (
     <div className="space-y-6">
@@ -134,43 +134,29 @@ export default function VisitsPage() {
           <div className="mb-8 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground">Filter by BDM</Label>
-              <Select value={selectedBDM} onValueChange={setSelectedBDM}>
-                <SelectTrigger className="bg-background !h-12 rounded-xl border-border/50 shadow-sm w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All BDMs</SelectItem>
-                  {uniqueBDMs.map((bdm, index) => (
-                    <SelectItem key={`${bdm.id}-${index}`} value={bdm.id}>
-                      {bdm.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search BDM name..."
+                  value={bdmSearch}
+                  onChange={(e) => setBdmSearch(e.target.value)}
+                  className="bg-background pl-10 !h-12 rounded-xl border-border/50 shadow-sm w-full"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground">
                 Filter by Customer
               </Label>
-              <Select
-                value={selectedCustomer}
-                onValueChange={setSelectedCustomer}
-              >
-                <SelectTrigger className="bg-background !h-12 rounded-xl border-border/50 shadow-sm w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Customers</SelectItem>
-                  {uniqueCustomers.map((customer, index) => (
-                    <SelectItem
-                      key={`${customer.id}-${index}`}
-                      value={customer.id}
-                    >
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search customer name..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="bg-background pl-10 !h-12 rounded-xl border-border/50 shadow-sm w-full"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground">Start Date</Label>
