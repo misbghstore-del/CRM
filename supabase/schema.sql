@@ -6,7 +6,7 @@ create table profiles (
   id uuid references auth.users on delete cascade not null primary key,
   email text,
   full_name text,
-  role text check (role in ('admin', 'bdm')) default 'bdm',
+  role text check (role in ('admin', 'bdm', 'super_admin')) default 'bdm',
   region text,
   updated_at timestamp with time zone
 );

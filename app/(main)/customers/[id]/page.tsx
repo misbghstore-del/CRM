@@ -52,6 +52,16 @@ interface Customer {
   last_edited_by_profile?: { full_name: string };
 }
 
+interface Visit {
+  id: string;
+  timestamp: string;
+  purpose: string;
+  outcome: string;
+  notes: string | null;
+  photo_url: string | null;
+  profiles: { full_name: string } | { full_name: string }[] | null;
+}
+
 export default function CustomerDetailsPage({
   params,
 }: {
@@ -61,7 +71,7 @@ export default function CustomerDetailsPage({
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [visits, setVisits] = useState<any[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -442,7 +452,10 @@ export default function CustomerDetailsPage({
                     <div>
                       <h4 className="font-semibold">{visit.purpose}</h4>
                       <p className="text-sm text-muted-foreground">
-                        By {visit.profiles?.full_name || "Unknown"}
+                        By{" "}
+                        {(Array.isArray(visit.profiles)
+                          ? visit.profiles[0]?.full_name
+                          : visit.profiles?.full_name) || "Unknown"}
                       </p>
                     </div>
                     <DateDisplay timestamp={visit.timestamp} />

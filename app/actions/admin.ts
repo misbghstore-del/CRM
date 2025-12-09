@@ -19,9 +19,41 @@ function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false,
     },
   });
+}
+
+import { createClient as createServerClient } from "@/utils/supabase/server";
+
+// Helper to check if current user has permission
+async function checkPermission(allowedRoles: string[]) {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get profile to check role
+  const adminClient = getAdminClient();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !allowedRoles.includes(profile.role)) {
+    throw new Error(
+      `Insufficient permissions: User has role ${
+        profile?.role
+      }, needed ${allowedRoles.join(" or ")}`
+    );
+  }
+
+  return profile;
 }
 
 export async function getUsersList() {
@@ -100,6 +132,13 @@ export async function createUser(
   const fullName = formData.get("fullName") as string;
   const role = formData.get("role") as string;
 
+  // 1. Permission Check: Only admin or super_admin can create users
+  try {
+    await checkPermission(["admin", "super_admin"]);
+  } catch (e) {
+    return { error: "Unauthorized: Only Admins can create users." };
+  }
+
   console.log(
     `[createUser] Attempting to create user: ${email}, role: ${role}`
   );
@@ -163,6 +202,14 @@ export async function createUser(
 
 export async function toggleUserStatus(userId: string, shouldBan: boolean) {
   console.log(`[toggleUserStatus] User: ${userId}, Ban: ${shouldBan}`);
+
+  // 1. Permission Check: Only SUPER ADMIN can ban users
+  try {
+    await checkPermission(["super_admin"]);
+  } catch (e) {
+    return { error: "Unauthorized: Only Super Admin can ban users." };
+  }
+
   try {
     const supabaseAdmin = getAdminClient();
     const banDuration = shouldBan ? "876000h" : "none";
@@ -190,6 +237,14 @@ export async function toggleUserStatus(userId: string, shouldBan: boolean) {
 
 export async function updateUserRole(userId: string, newRole: "admin" | "bdm") {
   console.log(`[updateUserRole] User: ${userId}, New Role: ${newRole}`);
+
+  // 1. Permission Check: Only SUPER ADMIN can change roles (promote/demote)
+  try {
+    await checkPermission(["super_admin"]);
+  } catch (e) {
+    return { error: "Unauthorized: Only Super Admin can manage roles." };
+  }
+
   try {
     const supabaseAdmin = getAdminClient();
 
@@ -226,6 +281,14 @@ export async function updateUserRole(userId: string, newRole: "admin" | "bdm") {
 
 export async function deleteUser(userId: string) {
   console.log(`[deleteUser] Attempting to delete user: ${userId}`);
+
+  // 1. Permission Check: Only SUPER ADMIN can delete users
+  try {
+    await checkPermission(["super_admin"]);
+  } catch (e) {
+    return { error: "Unauthorized: Only Super Admin can delete users." };
+  }
+
   try {
     const supabaseAdmin = getAdminClient();
 

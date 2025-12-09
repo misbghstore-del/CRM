@@ -95,7 +95,8 @@ export default async function DashboardPage() {
 
       {/* Stats & Actions Row */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <CustomerStats />
+        {/* Only show Total Customers stats to non-BDM users (Admins, Super Admins) */}
+        {profile?.role !== "bdm" && <CustomerStats />}
 
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -83,37 +83,37 @@ export function Header() {
       name: "Dashboard",
       href: "/dashboard",
       icon: BarChart3,
-      roles: ["admin", "bdm"],
+      roles: ["admin", "super_admin", "bdm"],
     },
     {
       name: "New Visit",
       href: "/visits/new",
       icon: Plus,
-      roles: ["admin", "bdm"],
+      roles: ["admin", "super_admin", "bdm"],
     },
     {
       name: "Planner",
       href: "/planner",
       icon: Calendar,
-      roles: ["admin", "bdm"],
+      roles: ["admin", "super_admin", "bdm"],
     },
     {
       name: "KPI Report",
       href: "/kpi",
       icon: BarChart3,
-      roles: ["admin", "bdm"],
+      roles: ["admin", "super_admin", "bdm"],
     },
     {
       name: "All Visits",
       href: "/visits",
       icon: List,
-      roles: ["admin"],
+      roles: ["admin", "super_admin"],
     },
     {
       name: "Admin",
       href: "/admin",
       icon: Settings,
-      roles: ["admin"],
+      roles: ["admin", "super_admin"],
     },
   ];
 

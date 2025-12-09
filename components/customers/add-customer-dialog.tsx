@@ -60,26 +60,40 @@ export default function AddCustomerDialog({
     if (data) setProfessionals(data);
   };
 
+  const fetchLocation = (retryWithLowAccuracy = false) => {
+    if ("geolocation" in navigator) {
+      const options = retryWithLowAccuracy
+        ? { enableHighAccuracy: false, timeout: 30000, maximumAge: 60000 }
+        : { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          if (error.code === 3 && !retryWithLowAccuracy) {
+            console.warn(
+              "High accuracy geolocation timed out, retrying with low accuracy..."
+            );
+            fetchLocation(true);
+            return;
+          }
+
+          console.warn("Geolocation error:", error.code, error.message);
+        },
+        options
+      );
+    }
+  };
+
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     if (newOpen) {
       fetchProfessionals();
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            });
-          },
-          undefined,
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          }
-        );
-      }
+      fetchLocation();
     }
   };
 
@@ -285,10 +299,23 @@ export default function AddCustomerDialog({
           {customerType === "Prospect Dealer" && (
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Location Tag</Label>
-              <div className="col-span-3 p-2 bg-muted rounded-md text-sm">
-                {location
-                  ? `${location.lat}, ${location.lng}`
-                  : "Fetching location..."}
+              <div className="col-span-3 p-2 bg-muted rounded-md text-sm flex justify-between items-center">
+                <span>
+                  {location
+                    ? `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
+                    : "Fetching location..."}
+                </span>
+                {!location && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => fetchLocation()}
+                  >
+                    Retry
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -359,10 +386,23 @@ export default function AddCustomerDialog({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">Location Tag</Label>
-                <div className="col-span-3 p-2 bg-muted rounded-md text-sm">
-                  {location
-                    ? `${location.lat}, ${location.lng}`
-                    : "Fetching location..."}
+                <div className="col-span-3 p-2 bg-muted rounded-md text-sm flex justify-between items-center">
+                  <span>
+                    {location
+                      ? `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
+                      : "Fetching location..."}
+                  </span>
+                  {!location && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2"
+                      onClick={() => fetchLocation()}
+                    >
+                      Retry
+                    </Button>
+                  )}
                 </div>
               </div>
             </>

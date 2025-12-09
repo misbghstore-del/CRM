@@ -95,7 +95,7 @@ export async function getTopBDMs() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (profile?.role !== "admin" && profile?.role !== "super_admin") {
     return [];
   }
 

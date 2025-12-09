@@ -82,6 +82,76 @@ function NewVisitForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const fetchLocation = () => {
+    setLocationError(null);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          setLocation({ lat, lng });
+
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+              {
+                headers: { "User-Agent": "CRM-App/1.0" },
+                signal: AbortSignal.timeout(5000),
+              }
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              const address = data.address;
+              const parts = [];
+              if (address.road) parts.push(address.road);
+              if (address.suburb || address.neighbourhood)
+                parts.push(address.suburb || address.neighbourhood);
+              if (address.city || address.town || address.village)
+                parts.push(address.city || address.town || address.village);
+              if (address.state) parts.push(address.state);
+
+              const placeName =
+                parts.length > 0 ? parts.join(", ") : data.display_name;
+              setLocationName(placeName);
+            } else {
+              setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+            }
+          } catch (error) {
+            console.warn("Error fetching place name:", error);
+            setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error.code, error.message);
+          let errorMessage = "Could not get location.";
+          switch (error.code) {
+            case 1:
+              errorMessage = "Location permission denied.";
+              break;
+            case 2:
+              errorMessage = "Location unavailable.";
+              break;
+            case 3:
+              errorMessage = "Location request timed out.";
+              break;
+            default:
+              errorMessage = error.message || "Unknown error";
+          }
+          setLocationError(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by this browser.");
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       const supabase = createClient();
@@ -116,66 +186,7 @@ function NewVisitForm() {
         }
       }
 
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-
-            setLocation({ lat, lng });
-
-            // Reverse geocoding to get place name
-            try {
-              const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-                {
-                  headers: {
-                    "User-Agent": "CRM-App/1.0",
-                  },
-                  signal: AbortSignal.timeout(5000), // 5 second timeout
-                }
-              );
-
-              if (response.ok) {
-                const data = await response.json();
-                // Build a readable address from the response
-                const address = data.address;
-                const parts = [];
-
-                if (address.road) parts.push(address.road);
-                if (address.suburb || address.neighbourhood)
-                  parts.push(address.suburb || address.neighbourhood);
-                if (address.city || address.town || address.village)
-                  parts.push(address.city || address.town || address.village);
-                if (address.state) parts.push(address.state);
-
-                const placeName =
-                  parts.length > 0 ? parts.join(", ") : data.display_name;
-                setLocationName(placeName);
-              } else {
-                // API returned error, use coordinates as fallback
-                console.warn("Reverse geocoding failed:", response.status);
-                setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-              }
-            } catch (error) {
-              // Network error or timeout, use coordinates as fallback
-              console.warn("Error fetching place name:", error);
-              setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-            }
-          },
-          () => {
-            setLocationError("Could not get location. Ensure GPS is enabled.");
-            // Location error is displayed in the UI
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          }
-        );
-      } else {
-        setLocationError("Geolocation is not supported by this browser.");
-      }
+      fetchLocation();
     };
     init();
   }, [searchParams]);
@@ -281,14 +292,14 @@ function NewVisitForm() {
                       value={
                         selectedCustomer
                           ? {
-                            value: selectedCustomer,
-                            label:
-                              customers.find((c) => c.id === selectedCustomer)
-                                ?.name || "",
-                            phone:
-                              customers.find((c) => c.id === selectedCustomer)
-                                ?.phone || "",
-                          }
+                              value: selectedCustomer,
+                              label:
+                                customers.find((c) => c.id === selectedCustomer)
+                                  ?.name || "",
+                              phone:
+                                customers.find((c) => c.id === selectedCustomer)
+                                  ?.phone || "",
+                            }
                           : null
                       }
                       onChange={(option) => {
@@ -485,9 +496,18 @@ function NewVisitForm() {
                   </div>
                 </div>
                 {locationError && (
-                  <p className="text-xs text-destructive mt-2">
-                    {locationError}
-                  </p>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <p className="text-xs text-destructive">{locationError}</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchLocation()}
+                      className="w-full text-xs h-8 border-destructive/20 hover:bg-destructive/10 text-destructive"
+                    >
+                      <MapPin className="mr-2 h-3 w-3" /> Retry Location
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

@@ -63,6 +63,7 @@ interface User {
 
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -114,8 +115,12 @@ export default function AdminPage() {
         .eq("id", user.id)
         .single();
 
-      if (profile && profile.role === "admin") {
+      if (
+        profile &&
+        (profile.role === "admin" || profile.role === "super_admin")
+      ) {
         setIsAdmin(true);
+        setUserRole(profile.role);
         fetchUsers();
       } else {
         setIsAdmin(false);
@@ -124,6 +129,9 @@ export default function AdminPage() {
     };
     checkAdminAccess();
   }, []);
+
+  // Helper to check if current user is super admin
+  const isSuperAdmin = userRole === "super_admin";
 
   const handleSync = async () => {
     setSyncing(true);
@@ -244,6 +252,9 @@ export default function AdminPage() {
     }
     setSyncing(false);
   };
+
+  // In the Table Actions Column:
+  // ...
 
   if (isAdmin === false) {
     return (
@@ -475,24 +486,26 @@ export default function AdminPage() {
                             </td>
                             <td className="px-4 py-3 text-right">
                               <div className="flex justify-end gap-2">
-                                {/* Promote/Demote */}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                                  title={
-                                    user.role === "admin"
-                                      ? "Demote to User"
-                                      : "Promote to Admin"
-                                  }
-                                  onClick={() =>
-                                    handleRoleUpdate(user.id, user.role)
-                                  }
-                                >
-                                  <UserCheck className="h-4 w-4" />
-                                </Button>
+                                {/* Promote/Demote - ONLY SUPER ADMIN */}
+                                {isSuperAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                                    title={
+                                      user.role === "admin"
+                                        ? "Demote to User"
+                                        : "Promote to Admin"
+                                    }
+                                    onClick={() =>
+                                      handleRoleUpdate(user.id, user.role)
+                                    }
+                                  >
+                                    <UserCheck className="h-4 w-4" />
+                                  </Button>
+                                )}
 
-                                {/* Reset Password */}
+                                {/* Reset Password - Admin & Super Admin */}
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -504,33 +517,38 @@ export default function AdminPage() {
                                   <Key className="h-4 w-4" />
                                 </Button>
 
-                                {/* Ban/Unban */}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className={`h-8 w-8 p-0 ${isBanned
-                                      ? "text-red-600"
-                                      : "text-muted-foreground"
+                                {/* Ban/Unban - ONLY SUPER ADMIN */}
+                                {isSuperAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className={`h-8 w-8 p-0 ${
+                                      isBanned
+                                        ? "text-red-600"
+                                        : "text-muted-foreground"
                                     } hover:text-orange-600`}
-                                  title={isBanned ? "Unban User" : "Ban User"}
-                                  onClick={() =>
-                                    handleToggleBan(user.id, isBanned)
-                                  }
-                                >
-                                  <Ban className="h-4 w-4" />
-                                </Button>
+                                    title={isBanned ? "Unban User" : "Ban User"}
+                                    onClick={() =>
+                                      handleToggleBan(user.id, isBanned)
+                                    }
+                                  >
+                                    <Ban className="h-4 w-4" />
+                                  </Button>
+                                )}
 
-                                {/* Delete */}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
-                                  title="Delete User"
-                                  onClick={() => handleDelete(user.id)}
-                                  disabled={user.email === currentUserEmail}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {/* Delete - ONLY SUPER ADMIN */}
+                                {isSuperAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                                    title="Delete User"
+                                    onClick={() => handleDelete(user.id)}
+                                    disabled={user.email === currentUserEmail}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </td>
                           </tr>
