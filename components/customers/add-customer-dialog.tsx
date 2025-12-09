@@ -209,8 +209,6 @@ export default function AddCustomerDialog({
                   <SelectItem value="Architect">Architect</SelectItem>
                   <SelectItem value="Builder">Builder</SelectItem>
                   <SelectItem value="Contractor">Contractor</SelectItem>
-                  <SelectItem value="Dealer">Dealer</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
