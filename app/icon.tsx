@@ -1,8 +1,5 @@
 import { ImageResponse } from "next/og";
 
-// Route segment config
-// export const runtime = "edge";
-
 // Image metadata
 export function generateImageMetadata() {
   return [
@@ -22,6 +19,8 @@ export function generateImageMetadata() {
 // Image generation
 export default function Icon({ id }: { id: string }) {
   const size = id === "192" ? 192 : 512;
+  // Padding ratio to prevent icon touching edges (e.g. 10% padding)
+  const availableSize = size * 0.8;
 
   return new ImageResponse(
     (
@@ -36,49 +35,31 @@ export default function Icon({ id }: { id: string }) {
         }}
       >
         <svg
-          width={size}
-          height={size}
-          viewBox="0 0 32 32"
-          fill="none"
+          width={availableSize}
+          height={availableSize}
+          viewBox="0 0 245 245" // Approximate square viewBox for the symbol part
+          fill="#95C948"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Background Rect */}
-          <rect
-            width="32"
-            height="32"
-            rx="8"
-            fill="#ecfccb" // lime-100 (primary/20 approx)
-          />
-
-          {/* Envelope Body */}
-          <path
-            d="M22 10H10C8.89543 10 8 10.8954 8 12V20C8 21.1046 8.89543 22 10 22H22C23.1046 22 24 21.1046 24 20V12C24 10.8954 23.1046 10 22 10Z"
-            stroke="#84cc16" // lime-500 (primary)
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-
-          {/* Envelope Flap */}
-          <path
-            d="M8 14L16 18L24 14"
-            stroke="#84cc16" // lime-500
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-
-          {/* Notification Dot */}
-          <circle
-            cx="22"
-            cy="22"
-            r="3"
-            fill="#84cc16" // lime-500
-            stroke="#ffffff" // background
-            strokeWidth="1.5"
-          />
+          {/* Symbol Part Only */}
+          <rect x="228.2" width="25" height="25" />
+          <g transform="translate(0, 0)">
+            {/* The symbol is the 'U' shape on the left. 
+                Original viewBox is 0 0 595.6 245.2.
+                The symbol seems to be around x:0 to x:200 + the middle rect.
+                Actually the description of SVG is a bit complex.
+                Looking at the paths:
+                First path: M98.5... (This is the U shape)
+                Rect x=228.2 (This is the dot/separator)
+                Second path: M444.9... (This looks like 'C')
+                Third path: M595.6... (This looks like 'M' or 'R')
+                
+                The user wants the icon. Usually just the symbol.
+                The symbol is the first path + maybe the rect.
+                Let's use the first path and center it.
+             */}
+            <path d="M98.5,47.6c-29.2,0-55.5,12.8-73.5,33V0H0v145.9l0,0c0,0.1,0,0.2,0,0.3c0,54.3,44.2,98.5,98.5,98.5 s98.5-44.2,98.5-98.5S152.9,47.6,98.5,47.6L98.5,47.6z M98.5,219.7c-40.5,0-73.5-33-73.5-73.5s33-73.5,73.5-73.5s73.5,33,73.5,73.5 S139.1,219.7,98.5,219.7L98.5,219.7z" />
+          </g>
         </svg>
       </div>
     ),

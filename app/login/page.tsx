@@ -11,7 +11,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
@@ -66,11 +65,8 @@ export default function LoginPage() {
       <Card className="w-[400px] rounded-3xl shadow-lg border-border ring-1 ring-border">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Logo size={64} />
+            <Logo size={150} />
           </div>
-          <CardTitle className="text-3xl font-bold text-primary">
-            BDM CRM
-          </CardTitle>
           <CardDescription>
             Welcome back! Please sign in to continue.
           </CardDescription>
