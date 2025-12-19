@@ -18,7 +18,7 @@ export default function Logo({ className, size = 150 }: LogoProps) {
         viewBox="0 0 595.6 245.2"
         xmlSpace="preserve"
         width={size}
-        height="auto" // Maintain aspect ratio
+        // height="auto" removed as it is invalid SVG attribute
         className="fill-[#95C948]"
       >
         <rect x="228.2" width="25" height="25" />

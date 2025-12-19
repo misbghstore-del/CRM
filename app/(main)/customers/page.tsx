@@ -8,11 +8,21 @@ export default async function CustomersPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: customers } = await supabase
-    .from("customers")
-    .select("*")
-    .eq("assigned_to", user?.id)
-    .order("name");
+  // Get profile to check role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  let query = supabase.from("customers").select("*").order("name");
+
+  // Only super_admin can see all customers
+  if (profile?.role !== "super_admin") {
+    query = query.eq("assigned_to", user.id);
+  }
+
+  const { data: customers } = await query;
 
   return (
     <div className="space-y-6">

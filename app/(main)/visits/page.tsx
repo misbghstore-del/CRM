@@ -49,8 +49,8 @@ export default function VisitsPage() {
         .select("*, customers(name), profiles(full_name)")
         .order("timestamp", { ascending: false });
 
-      // If not admin, only show own visits
-      if (profile?.role !== "admin") {
+      // If not super_admin, only show own visits
+      if (profile?.role !== "super_admin") {
         query = query.eq("user_id", user.id);
       }
 
@@ -61,25 +61,6 @@ export default function VisitsPage() {
     };
     fetchVisits();
   }, []);
-
-  // Get unique BDMs and Customers for filter dropdowns
-  const uniqueBDMs = useMemo(() => {
-    const bdms = visits
-      .map((v) => ({ id: v.user_id, name: v.profiles?.full_name }))
-      .filter(
-        (v, i, arr) => v.name && arr.findIndex((t) => t.id === v.id) === i
-      );
-    return bdms;
-  }, [visits]);
-
-  const uniqueCustomers = useMemo(() => {
-    const customers = visits
-      .map((v) => ({ id: v.customer_id, name: v.customers?.name }))
-      .filter(
-        (v, i, arr) => v.name && arr.findIndex((t) => t.id === v.id) === i
-      );
-    return customers;
-  }, [visits]);
 
   // Filter visits based on selected filters
   const filteredVisits = useMemo(() => {
