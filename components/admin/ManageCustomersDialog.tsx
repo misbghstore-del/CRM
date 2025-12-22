@@ -94,7 +94,8 @@ export default function ManageCustomersDialog({
       if (usersResult.success && usersResult.users) {
         // Filter only BDMs and admins
         const bdmUsers = usersResult.users.filter(
-          (u: User) => u.role === "bdm" || u.role === "admin"
+          (u: User) =>
+            u.role === "bdm" || u.role === "admin" || u.role === "super_admin"
         );
         console.log("BDMs:", bdmUsers);
         setBdms(bdmUsers);

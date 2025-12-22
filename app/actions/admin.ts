@@ -541,7 +541,11 @@ export async function assignCustomerToBDM(customerId: string, bdmId: string) {
       throw new Error("BDM not found");
     }
 
-    if (bdm.role !== "bdm" && bdm.role !== "admin") {
+    if (
+      bdm.role !== "bdm" &&
+      bdm.role !== "admin" &&
+      bdm.role !== "super_admin"
+    ) {
       throw new Error("Selected user is not a BDM");
     }
 
