@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import SplashScreen from "@/components/splash-screen";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
         >
           <SplashScreen />
           {children}
+          <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>
     </html>

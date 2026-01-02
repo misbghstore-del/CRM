@@ -65,12 +65,15 @@ export default async function DashboardPage() {
     .limit(5)
     .returns<Visit[]>();
 
-  const { data: customers } = await supabase
+  const { data: rawCustomers } = await supabase
     .from("customers")
     .select("id, name, phone")
     .eq("assigned_to", user?.id)
     .order("name")
     .returns<Customer[]>();
+
+  // Filter out invalid customers to prevent render errors
+  const customers = (rawCustomers || []).filter((c) => c && c.id && c.name);
 
   // Get user role
   const { data: profile } = await supabase
@@ -78,8 +81,6 @@ export default async function DashboardPage() {
     .select("role")
     .eq("id", user?.id)
     .single();
-
-  const isAdmin = profile?.role === "admin";
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -111,7 +112,7 @@ export default async function DashboardPage() {
                 customers={customers || []}
                 trigger={
                   <Button
-                    className="w-full justify-start h-8 text-xs"
+                    className="w-full justify-start h-8 text-xs flex"
                     size="sm"
                   >
                     <Plus className="mr-2 h-3 w-3" /> Create Task
@@ -188,8 +189,17 @@ export default async function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground py-8">
+                <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground py-8 gap-4">
                   <p>No pending tasks. You&apos;re all caught up!</p>
+                  <CreateTaskDialog
+                    customers={customers || []}
+                    trigger={
+                      <Button size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Task
+                      </Button>
+                    }
+                  />
                 </div>
               )}
             </div>
@@ -203,17 +213,15 @@ export default async function DashboardPage() {
               <CalendarCheck className="h-5 w-5 text-blue-500" />
               Visits Today
             </CardTitle>
-            {isAdmin && (
-              <Link href="/visits">
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-8 px-0 text-muted-foreground"
-                >
-                  View all
-                </Button>
-              </Link>
-            )}
+            <Link href="/visits">
+              <Button
+                variant="link"
+                size="sm"
+                className="h-8 px-0 text-muted-foreground"
+              >
+                View all
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent className="flex-1">
             <div className="space-y-4">

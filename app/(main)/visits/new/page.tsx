@@ -38,6 +38,7 @@ import EditCustomerDialog from "@/components/customers/edit-customer-dialog";
 
 import ReactSelect from "react-select";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const PIPELINE_STAGES = [
   "New Lead",
@@ -82,74 +83,97 @@ function NewVisitForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const fetchLocation = () => {
-    setLocationError(null);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+  const handleLocationSuccess = async (position: GeolocationPosition) => {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
 
-          setLocation({ lat, lng });
+    setLocation({ lat, lng });
 
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-              {
-                headers: { "User-Agent": "CRM-App/1.0" },
-                signal: AbortSignal.timeout(5000),
-              }
-            );
-
-            if (response.ok) {
-              const data = await response.json();
-              const address = data.address;
-              const parts = [];
-              if (address.road) parts.push(address.road);
-              if (address.suburb || address.neighbourhood)
-                parts.push(address.suburb || address.neighbourhood);
-              if (address.city || address.town || address.village)
-                parts.push(address.city || address.town || address.village);
-              if (address.state) parts.push(address.state);
-
-              const placeName =
-                parts.length > 0 ? parts.join(", ") : data.display_name;
-              setLocationName(placeName);
-            } else {
-              setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-            }
-          } catch (error) {
-            console.warn("Error fetching place name:", error);
-            setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-          }
-        },
-        (error) => {
-          console.error("Geolocation error:", error.code, error.message);
-          let errorMessage = "Could not get location.";
-          switch (error.code) {
-            case 1:
-              errorMessage = "Location permission denied.";
-              break;
-            case 2:
-              errorMessage = "Location unavailable.";
-              break;
-            case 3:
-              errorMessage = "Location request timed out.";
-              break;
-            default:
-              errorMessage = error.message || "Unknown error";
-          }
-          setLocationError(errorMessage);
-        },
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
         {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
+          headers: { "User-Agent": "CRM-App/1.0" },
+          signal: AbortSignal.timeout(5000),
         }
       );
-    } else {
-      setLocationError("Geolocation is not supported by this browser.");
+
+      if (response.ok) {
+        const data = await response.json();
+        const address = data.address;
+        const parts = [];
+        if (address.road) parts.push(address.road);
+        if (address.suburb || address.neighbourhood)
+          parts.push(address.suburb || address.neighbourhood);
+        if (address.city || address.town || address.village)
+          parts.push(address.city || address.town || address.village);
+        if (address.state) parts.push(address.state);
+
+        const placeName =
+          parts.length > 0 ? parts.join(", ") : data.display_name;
+        setLocationName(placeName);
+      } else {
+        setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      }
+    } catch (error) {
+      console.warn("Error fetching place name:", error);
+      setLocationName(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
     }
+  };
+
+  const fetchLocation = () => {
+    setLocationError(null);
+    if (!("geolocation" in navigator)) {
+      setLocationError("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    // First try with high accuracy (5 seconds timeout)
+    navigator.geolocation.getCurrentPosition(
+      handleLocationSuccess,
+      (error) => {
+        console.warn(
+          "High accuracy geolocation failed, trying approximate...",
+          error.message
+        );
+
+        // Fallback to low accuracy (another 5 seconds)
+        navigator.geolocation.getCurrentPosition(
+          handleLocationSuccess,
+          (fallbackError) => {
+            // Show toast notification for location error
+            let errorMessage = "Could not get location.";
+            switch (fallbackError.code) {
+              case 1:
+                errorMessage = "Location permission denied.";
+                break;
+              case 2:
+                errorMessage = "Location unavailable.";
+                break;
+              case 3:
+                errorMessage = "Location request timed out.";
+                break;
+              default:
+                errorMessage = fallbackError.message || "Unknown error";
+            }
+            toast.error(errorMessage, {
+              description: "Please enable location access or try again.",
+            });
+            setLocationError(errorMessage);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 60000, // Accept cached position up to 1 minute old
+          }
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      }
+    );
   };
 
   useEffect(() => {

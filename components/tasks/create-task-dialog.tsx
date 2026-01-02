@@ -63,7 +63,7 @@ export default function CreateTaskDialog({
   const router = useRouter();
 
   const filteredCustomers = customers.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    c.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   useEffect(() => {

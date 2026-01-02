@@ -46,8 +46,8 @@ export default function VisitsChart() {
         <CardTitle>Visits Overview</CardTitle>
       </CardHeader>
       <CardContent className="pl-2">
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", height: 300 }}>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart
               data={data}
               margin={{

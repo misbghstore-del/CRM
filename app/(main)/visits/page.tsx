@@ -28,6 +28,7 @@ export default function VisitsPage() {
   const [customerSearch, setCustomerSearch] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>("");
 
   useEffect(() => {
     const fetchVisits = async () => {
@@ -43,6 +44,8 @@ export default function VisitsPage() {
         .select("role")
         .eq("id", user.id)
         .single();
+
+      if (profile) setUserRole(profile.role);
 
       let query = supabase
         .from("visits")
@@ -113,18 +116,20 @@ export default function VisitsPage() {
         <CardContent>
           {/* Filters */}
           <div className="mb-8 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Filter by BDM</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search BDM name..."
-                  value={bdmSearch}
-                  onChange={(e) => setBdmSearch(e.target.value)}
-                  className="bg-background pl-10 !h-12 rounded-xl border-border/50 shadow-sm w-full"
-                />
+            {userRole === "super_admin" && (
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Filter by BDM</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search BDM name..."
+                    value={bdmSearch}
+                    onChange={(e) => setBdmSearch(e.target.value)}
+                    className="bg-background pl-10 !h-12 rounded-xl border-border/50 shadow-sm w-full"
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <div className="space-y-2">
               <Label className="text-muted-foreground">
                 Filter by Customer
