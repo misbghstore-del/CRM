@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Custom loader animation */
+      .loader {
+        border-top-color: #3498db;
+        -webkit-animation: spinner 1.5s linear infinite;
+        animation: spinner 1.5s linear infinite;
+      }
+      @keyframes spinner {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800 font-sans antialiased p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+      <header class="mb-8 border-b pb-4">
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">System Control Hub</h1>
+        <p class="text-sm text-gray-500 mt-1">Financial Reporting & Automation</p>
+      </header>
+
+      <div id="statusMessage" class="hidden mb-6 p-4 rounded-lg text-sm font-medium transition-all duration-300"></div>
+
+      <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Authorization PIN</label>
+        <input type="password" id="authPin" placeholder="Enter PIN to unlock execution" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all shadow-sm">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-800">Daily Outstanding</h2>
+            <p class="text-xs text-gray-500 mt-2 mb-6">Generates and emails the 1-2 page Action Required PDF (Pending Dues Only).</p>
+          </div>
+          <button id="btnDaily" onclick="executeBatch('runDailyOutstandingBatch', 'btnDaily')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-colors">
+            <span class="btn-text">Execute Batch</span>
+            <div class="loader hidden ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 ml-2"></div>
+          </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-800">Sync Master Dashboard</h2>
+            <p class="text-xs text-gray-500 mt-2 mb-6">Loops dealer list, calculates dynamic aging buckets, and appends to the internal leaderboard.</p>
+          </div>
+          <button id="btnSync" onclick="executeBatch('runDashboardSync', 'btnSync')" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-colors">
+            <span class="btn-text">Sync Dashboard</span>
+            <div class="loader hidden ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 ml-2"></div>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <script>
+      function executeBatch(serverFunction, buttonId) {
+        // 1. Fetch the PIN from the input field
+        const pin = document.getElementById('authPin').value;
+        
+        const button = document.getElementById(buttonId);
+        const btnText = button.querySelector('.btn-text');
+        const loader = button.querySelector('.loader');
+        const statusDiv = document.getElementById('statusMessage');
+
+        // 2. Prevent execution if PIN is empty
+        if (!pin) {
+          showStatus(false, "Execution blocked: Please enter your Authorization PIN.");
+          return;
+        }
+
+        // 3. UI: Set Loading State
+        button.disabled = true;
+        button.classList.add('opacity-75', 'cursor-not-allowed');
+        btnText.innerText = 'Initializing...';
+        loader.classList.remove('hidden');
+        statusDiv.classList.add('hidden');
+
+        // 4. Asynchronous call to Code.gs (Passing the PIN)
+        google.script.run
+          .withSuccessHandler(function(response) {
+            resetButton(button, btnText, loader, 'Execute Batch');
+            showStatus(response.success, response.message);
+          })
+          .withFailureHandler(function(error) {
+            resetButton(button, btnText, loader, 'Execute Batch');
+            showStatus(false, "Execution failed: " + error.message);
+          })
+          [serverFunction](pin); // The PIN is sent to the backend here
+      }
+
+      function resetButton(button, btnText, loader, originalText) {
+        button.disabled = false;
+        button.classList.remove('opacity-75', 'cursor-not-allowed');
+        btnText.innerText = originalText;
+        loader.classList.add('hidden');
+      }
+
+      function showStatus(isSuccess, message) {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.innerText = message;
+        statusDiv.classList.remove('hidden', 'bg-green-50', 'text-green-700', 'bg-red-50', 'text-red-700', 'border-green-200', 'border-red-200');
+        
+        if (isSuccess) {
+          statusDiv.classList.add('bg-green-50', 'text-green-800', 'border', 'border-green-200');
+        } else {
+          statusDiv.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+        }
+      }
+    </script>
+  </body>
+</html>
